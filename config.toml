@@ -1,0 +1,125 @@
+[options]
+defaultPaths = [
+  "{{{ CWD }}}",
+  "{{{ HOME }}}", 
+  "{{{ HOME }}}/Downloads", 
+  "{{{ HOME }}}/Desktop",
+]
+
+[conversions.gs]
+cmd = [
+  "gs",
+  "-sDEVICE=pdfwrite",
+  "-dNOPAUSE",
+  "-dQUIET",
+  "-dBATCH",
+  "-dPDFSETTINGS=/screen",
+  "-dCompatibilityLevel=1.4",
+  "-sOutputFile={{{ TARGET }}}",
+  "{{{ SOURCE }}}",
+]
+
+[conversions.magick-convert]
+cmd = [
+  "magick",
+  "convert",
+  "{{{ SOURCE }}}",
+  "-strip",
+  "-quality",
+  "86",
+  "{{{ TARGET }}}",
+]
+
+[conversions.ffmpeg]
+cmd = [
+  "ffmpeg",
+  "-i",
+  "{{{ SOURCE }}}",
+  "-c:v",
+  "libx264",
+  "-movflags",
+  "+faststart",
+  "-preset",
+  "slow",
+  "-crf",
+  "18",
+  "-c:a",
+  "aac",
+  "-b:a",
+  "192k",
+  "-pix_fmt",
+  "yuv420p",
+  "{{{ TARGET }}}",
+]
+
+# ---
+
+[[strategies]]
+type = "video"
+input = "*.{mov,mp4,webm,mkv,m4v}"
+output = "{{{ HOME }}}/Movies/Videos/{{{ BASENAME }}}.mp4"
+convert = "ffmpeg"
+
+[[strategies]]
+type = "artifact"
+input = "*.{apk,aab,ipa}"
+output = "{{{ HOME }}}/Documents/Utilities/Artifacts/{{{ CREATION_TIME }}}_{{{ FILENAME }}}"
+
+[[strategies]]
+type = "qr-code"
+input = "+([[:digit:]]).png"
+output = "{{{ HOME }}}/Documents/Utilities/Artifacts/{{{ FILENAME }}}"
+
+[[strategies]]
+type = "pdf"
+input = "*.pdf"
+output = "{{{ HOME }}}/Documents/Utilities/Office/{{{ FILENAME }}}"
+convert = "gs"
+
+[[strategies]]
+type = "screenshot"
+input = "{Simulator Screen Shot,Screen Shot,Screenshot}*"
+output = "{{{ HOME }}}/Pictures/Screenshots/{{{ CREATION_TIME }}}_Screenshot.png"
+convert = "magick-convert"
+
+[[strategies]]
+type = "photo"
+input = "*.{jpg,jpeg,heic}"
+output = "{{{ HOME }}}/Pictures/Images/{{{ BASENAME }}}.jpg"
+convert = "magick-convert"
+
+[[strategies]]
+type = "web-image-1"
+input = "*.{gif,webp}"
+output = "{{{ HOME }}}/Pictures/Images/{{{ BASENAME }}}.png"
+convert = "magick-convert"
+
+[[strategies]]
+type = "web-image-2"
+input = "*.png"
+output = "{{{ HOME }}}/Pictures/Images/{{{ FILENAME }}}"
+
+[[strategies]]
+type = "vector-image"
+input = "*.svg"
+output = "{{{ HOME }}}/Pictures/Images/{{{ FILENAME }}}"
+
+[[strategies]]
+type = "document"
+input = "*.{doc,docx,xls,xlsx,ppt,pptx,csv,tsv,yml,yaml,toml}"
+output = "{{{ HOME }}}/Documents/Utilities/Office/{{{ FILENAME }}}"
+
+[[strategies]]
+type = "logs"
+input = "*.{log,txt,har}"
+output = "{{{ HOME }}}/Documents/Utilities/Logs/{{{ CREATION_TIME }}}_{{{ FILENAME }}}"
+
+[[strategies]]
+type = "keys"
+input = "*.{mobileprovision,p12,p8,cer,der,certSigningRequest}"
+output = "{{{ HOME }}}/Documents/Utilities/Keys/{{{ FILENAME }}}"
+
+[[strategies]]
+type = "google-keys"
+input = "google-services*.json"
+output = "{{{ HOME }}}/Documents/Utilities/Keys/{{{ FILENAME }}}"
