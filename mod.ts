@@ -1,14 +1,14 @@
-import { parse as tomlParse } from "https://deno.land/std@0.154.0/encoding/toml.ts";
-import { parse as flagParse } from "https://deno.land/std@0.154.0/flags/mod.ts";
-import { expandGlob } from "https://deno.land/std@0.154.0/fs/mod.ts";
+import { parse as tomlParse } from "https://deno.land/std@0.213.0/toml/mod.ts";
+import { parseArgs } from "https://deno.land/std@0.213.0/cli/mod.ts";
+import { expandGlob } from "https://deno.land/std@0.213.0/fs/mod.ts";
 import {
   globToRegExp,
   parse as pathParse,
   resolve,
-} from "https://deno.land/std@0.154.0/path/mod.ts";
+} from "https://deno.land/std@0.213.0/path/mod.ts";
 import chalk from "https://deno.land/x/chalkin@v0.1.3/mod.ts";
 import { render } from "https://deno.land/x/mustache@v0.3.0/mod.ts";
-import format from "https://esm.sh/date-fns@2.29.1/format";
+import { format } from "npm:date-fns@3.3.1";
 import {
   object,
   array,
@@ -21,7 +21,7 @@ import {
   defaulted,
   Infer,
   intersection,
-} from "https://esm.sh/superstruct@0.16.0";
+} from "npm:superstruct@1.0.3";
 
 const Options = object({
   defaultPaths: array(string()),
@@ -86,7 +86,7 @@ async function fileExists(target: string): Promise<boolean> {
 }
 
 function formatDate(date: Date | null): string {
-  return format(date ?? null, "yy-MM-dd_HH-mm-SS");
+  return format(date ?? new Date(), "yy-MM-dd_HH-mm-SS");
 }
 
 type ConversionModel = BaseModel & {
@@ -94,12 +94,12 @@ type ConversionModel = BaseModel & {
   TARGET: string;
 };
 
-async function executeConversion({ cmd }: Conversion, model: ConversionModel) {
-  const process = Deno.run({
-    cmd: cmd.map((template) => render(template, model)),
+async function executeConversion({ cmd: [cmdPath, ...cmdArgs ] }: Conversion, model: ConversionModel) {
+  const process = new Deno.Command(cmdPath, {
+    args: cmdArgs.map((template) => render(template, model)),
   });
 
-  const status = await process.status();
+  const status = await process.output();
 
   if (status.success) {
     await Deno.remove(model.SOURCE);
@@ -245,7 +245,9 @@ OPTIONS:
     --help
         print this message
     --config
-        path to sorting manifest, defaults to ${import.meta.resolve("./config.toml")}
+        path to sorting manifest, defaults to ${import.meta.resolve(
+          "./config.toml"
+        )}
     --dry-run
         prints sorting plan without executing it in stdout
 
@@ -287,7 +289,7 @@ STRATEGY TARGET TEMPLATE ARGS:
 `;
 
 async function main() {
-  const flags = flagParse(Deno.args, {
+  const flags = parseArgs(Deno.args, {
     alias: {
       "dry-run": "dryRun",
       config: "overrideConfigPath",
